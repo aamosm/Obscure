@@ -1,29 +1,135 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Obscure</title>
+    <meta name="description" content="A customizable new tab page built around search and the sky.">
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Work+Sans:wght@400;500;600&family=Fraunces:wght@400;600&family=Playfair+Display:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+
     <link rel="stylesheet" href="/src/style.css">
   </head>
-  <body>
+  <body data-theme="void">
     <div id="app">
-      <!-- search bar -->
-      <form id="search-form">
-        <select id="engine">
-          <option value="google">Google</option>
-          <option value="vyntr">Vyntr</option>
-          <option value="marginalia">Marginalia</option>
-          <option value="wiby">Wiby</option>
-          <option value="phind">Phind (Code)</option>
-          <option value="brave">Brave</option>
-          <option value="duckduckgo">DuckDuckGo</option>
-        </select>
-        <input type="text" id="query" placeholder="Search..." autofocus autocomplete="off">
-        <button type="submit">Search</button>
-      </form>
 
-      <div id="nasa-box">
-        <h2 id="title">Loading space stuff...</h2>
-        <p id="desc"></p>
-      </div>
+      <button id="settings-toggle" aria-label="Open settings" aria-expanded="false">⚙</button>
+
+      <main id="stage">
+        <form id="search-form" autocomplete="off">
+          <span class="prompt">›</span>
+          <input type="text" id="query" placeholder="search obscure..." autofocus autocomplete="off">
+          <select id="engine"></select>
+          <button type="submit">go</button>
+        </form>
+
+        <p id="greeting" hidden></p>
+
+        <div id="clock" hidden></div>
+
+        <div id="nasa-box">
+          <h1 id="title">loading space stuff...</h1>
+          <p id="desc"></p>
+        </div>
+
+        <div id="weather-box" hidden>
+          <span id="weather-temp"></span>
+          <span id="weather-desc"></span>
+          <span id="weather-city"></span>
+        </div>
+      </main>
+
+      <aside id="settings-panel" aria-hidden="true">
+        <div class="panel-head">
+          <span>settings</span>
+          <button id="settings-close" aria-label="Close settings">×</button>
+        </div>
+
+        <section>
+          <label class="section-label">theme</label>
+          <div id="theme-swatches"></div>
+        </section>
+
+        <section>
+          <label class="section-label" for="accent-custom">custom accent</label>
+          <input type="color" id="accent-custom" value="#5eead4">
+        </section>
+
+        <section>
+          <label class="section-label" for="blur-range">panel blur</label>
+          <input type="range" id="blur-range" min="0" max="24" value="14">
+        </section>
+
+        <section>
+          <label class="section-label" for="font-select">font</label>
+          <select id="font-select">
+            <option value="Space Grotesk">Space Grotesk</option>
+            <option value="Inter">Inter</option>
+            <option value="IBM Plex Sans">IBM Plex Sans</option>
+            <option value="Work Sans">Work Sans</option>
+            <option value="Fraunces">Fraunces</option>
+            <option value="Playfair Display">Playfair Display</option>
+            <option value="JetBrains Mono">JetBrains Mono</option>
+          </select>
+        </section>
+
+        <section>
+          <label class="section-label">
+            <input type="checkbox" id="toggle-text" checked>
+            show title & description
+          </label>
+        </section>
+
+        <section>
+          <label class="section-label">
+            <input type="checkbox" id="toggle-hd">
+            use hd image (slower)
+          </label>
+        </section>
+
+        <section>
+          <label class="section-label" for="date-mode">background date</label>
+          <select id="date-mode">
+            <option value="today">today</option>
+            <option value="random">random past date</option>
+            <option value="custom">custom date</option>
+          </select>
+          <input type="date" id="date-custom" hidden>
+        </section>
+
+        <section>
+          <label class="section-label">
+            <input type="checkbox" id="toggle-weather">
+            show weather
+          </label>
+          <input type="text" id="weather-city-input" placeholder="city (leave blank to use location)" hidden>
+        </section>
+
+        <section>
+          <label class="section-label">
+            <input type="checkbox" id="toggle-clock">
+            show clock
+          </label>
+        </section>
+
+        <section>
+          <label class="section-label">
+            <input type="checkbox" id="toggle-greeting">
+            show greeting
+          </label>
+          <input type="text" id="greeting-name" placeholder="your name (optional)" hidden>
+        </section>
+
+        <button id="settings-reset">reset to defaults</button>
+      </aside>
+
     </div>
 
     <script type="module" src="/src/main.js"></script>
