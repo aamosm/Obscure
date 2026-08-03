@@ -31,7 +31,7 @@ fetch(`https://api.nasa.gov/planetary/apod?api_key=${apiKey}`)
     
     // Only set background if it's an image
     if (data.media_type === 'image') {
-      document.body.style.backgroundImage = `url('${data.hdurl || data.url}')`;
+      document.body.style.backgroundImage = `url('${data.url}')`;
     }
   })
   .catch(err => {
