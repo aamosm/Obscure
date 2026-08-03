@@ -3,7 +3,7 @@
 # Obscure
 
 A customizable new tab page built around search, discovery and community.
-
+**Live:** https://aamosm.github.io/Obscure
 **Devlog:** https://stardance.hackclub.com/projects/43357
 
 </div>
