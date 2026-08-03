@@ -7,7 +7,10 @@ const engines = {
   google: 'https://www.google.com/search?q=',
   vyntr: 'https://vyntr.com/search?q=',
   marginalia: 'https://search.marginalia.nu/search?query=',
-  wiby: 'https://wiby.me/?q='
+  wiby: 'https://wiby.me/?q=',
+  phind: 'https://www.phind.com/search?q=',
+  brave: 'https://search.brave.com/search?q=',
+  duckduckgo: 'https://duckduckgo.com/?q='
 };
 
 // Search routing
