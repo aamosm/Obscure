@@ -1,0 +1,28 @@
+<html>
+  <head>
+    <title>Obscure</title>
+    <link rel="stylesheet" href="/src/style.css">
+  </head>
+  <body>
+    <div id="app">
+      <!-- search bar -->
+      <form id="search-form">
+        <select id="engine">
+          <option value="google">Google</option>
+          <option value="vyntr">Vyntr</option>
+          <option value="marginalia">Marginalia</option>
+          <option value="wiby">Wiby</option>
+        </select>
+        <input type="text" id="query" placeholder="Search..." autofocus autocomplete="off">
+        <button type="submit">Search</button>
+      </form>
+
+      <div id="nasa-box">
+        <h2 id="title">Loading space stuff...</h2>
+        <p id="desc"></p>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
