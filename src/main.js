@@ -1,6 +1,52 @@
+const defaults = {
+  theme: 'void',
+  font: 'Space Grotesk',
+  textLength: 'full',
+  textBox: true,
+  textBoxOpacity: 35,
+  hd: false,
+  dateMode: 'today',
+  customDate: '',
+  resolvedDate: null,
+  weather: false,
+  city: '',
+  customAccent: '',
+  blur: 14,
+  clock: false,
+  greeting: false,
+  greetingName: '',
+  engine: 'google',
+  customEngines: []
+};
+
+function loadSettings() {
+  try {
+    return { ...defaults, ...JSON.parse(localStorage.getItem('obscure_settings')) };
+  } catch {
+    return { ...defaults };
+  }
+}
+
+function saveSettings(s) {
+  localStorage.setItem('obscure_settings', JSON.stringify(s));
+}
+
+let settings = loadSettings();
+settings.customEngines = Array.isArray(settings.customEngines) ? [...settings.customEngines] : [];
+
+function persist() {
+  saveSettings(settings);
+}
+
 const form = document.getElementById('search-form');
 const input = document.getElementById('query');
-const engineSelect = document.getElementById('engine');
+const enginePicker = document.getElementById('engine-picker');
+const engineTrigger = document.getElementById('engine-trigger');
+const engineMenu = document.getElementById('engine-menu');
+const engineList = document.getElementById('engine-list');
+const newEngineName = document.getElementById('new-engine-name');
+const newEngineUrl = document.getElementById('new-engine-url');
+const newEngineAdd = document.getElementById('new-engine-add');
 
 const engines = {
   general: {
@@ -46,70 +92,152 @@ const engines = {
   }
 };
 
-function buildEngineSelect() {
+function slugify(name) {
+  const base = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  return base || 'engine';
+}
+
+function findEngine(key) {
   for (const group of Object.values(engines)) {
-    const optgroup = document.createElement('optgroup');
-    optgroup.label = group.label;
-    for (const [value, [name]] of Object.entries(group.items)) {
-      const opt = document.createElement('option');
-      opt.value = value;
-      opt.textContent = name;
-      optgroup.appendChild(opt);
+    if (group.items[key]) return { label: group.items[key][0], url: group.items[key][1] };
+  }
+  const custom = settings.customEngines.find((e) => e.key === key);
+  if (custom) return { label: custom.label, url: custom.url };
+  return null;
+}
+
+function urlFor(key) {
+  const found = findEngine(key);
+  return found ? found.url : engines.general.items.google[1];
+}
+
+function updateEngineTrigger() {
+  const found = findEngine(settings.engine) || { label: 'Google' };
+  engineTrigger.textContent = found.label;
+}
+
+function makeOption(key, name, removable) {
+  const row = document.createElement('div');
+  row.className = 'engine-option' + (key === settings.engine ? ' active' : '');
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'engine-option-name';
+  btn.textContent = name;
+  btn.addEventListener('click', () => selectEngine(key));
+  row.appendChild(btn);
+
+  if (removable) {
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'engine-remove';
+    remove.textContent = '×';
+    remove.addEventListener('click', (e) => {
+      e.stopPropagation();
+      settings.customEngines = settings.customEngines.filter((e2) => e2.key !== key);
+      if (settings.engine === key) settings.engine = 'google';
+      persist();
+      buildEngineList();
+      updateEngineTrigger();
+    });
+    row.appendChild(remove);
+  }
+
+  return row;
+}
+
+function buildEngineList() {
+  engineList.innerHTML = '';
+
+  for (const group of Object.values(engines)) {
+    const label = document.createElement('div');
+    label.className = 'engine-group-label';
+    label.textContent = group.label;
+    engineList.appendChild(label);
+
+    for (const [key, [name]] of Object.entries(group.items)) {
+      engineList.appendChild(makeOption(key, name, false));
     }
-    engineSelect.appendChild(optgroup);
+  }
+
+  if (settings.customEngines.length) {
+    const label = document.createElement('div');
+    label.className = 'engine-group-label';
+    label.textContent = 'custom';
+    engineList.appendChild(label);
+
+    for (const ce of settings.customEngines) {
+      engineList.appendChild(makeOption(ce.key, ce.label, true));
+    }
   }
 }
 
-function urlFor(engineKey) {
-  for (const group of Object.values(engines)) {
-    if (group.items[engineKey]) return group.items[engineKey][1];
-  }
-  return engines.general.items.google[1];
+function selectEngine(key) {
+  settings.engine = key;
+  updateEngineTrigger();
+  buildEngineList();
+  persist();
+  closeEngineMenu();
 }
 
-buildEngineSelect();
+function openEngineMenu() {
+  engineMenu.hidden = false;
+  engineTrigger.setAttribute('aria-expanded', 'true');
+}
+
+function closeEngineMenu() {
+  engineMenu.hidden = true;
+  engineTrigger.setAttribute('aria-expanded', 'false');
+}
+
+engineTrigger.addEventListener('click', () => {
+  if (engineMenu.hidden) openEngineMenu();
+  else closeEngineMenu();
+});
+
+document.addEventListener('click', (e) => {
+  if (!enginePicker.contains(e.target)) closeEngineMenu();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeEngineMenu();
+});
+
+newEngineAdd.addEventListener('click', () => {
+  const name = newEngineName.value.trim();
+  const url = newEngineUrl.value.trim();
+  if (!name || !url) return;
+
+  let key = slugify(name);
+  const taken = new Set([
+    ...Object.values(engines).flatMap((g) => Object.keys(g.items)),
+    ...settings.customEngines.map((e) => e.key)
+  ]);
+  if (taken.has(key)) {
+    let i = 2;
+    while (taken.has(`${key}-${i}`)) i++;
+    key = `${key}-${i}`;
+  }
+
+  settings.customEngines.push({ key, label: name, url });
+  settings.engine = key;
+  persist();
+  buildEngineList();
+  updateEngineTrigger();
+  newEngineName.value = '';
+  newEngineUrl.value = '';
+  closeEngineMenu();
+});
+
+buildEngineList();
+updateEngineTrigger();
 
 form.addEventListener('submit', (e) => {
   e.preventDefault();
   if (input.value !== '') {
-    window.location.href = urlFor(engineSelect.value) + encodeURIComponent(input.value);
+    window.location.href = urlFor(settings.engine) + encodeURIComponent(input.value);
   }
 });
-
-// settings
-
-const defaults = {
-  theme: 'void',
-  font: 'Space Grotesk',
-  textLength: 'full',
-  textBox: true,
-  textBoxOpacity: 35,
-  hd: false,
-  dateMode: 'today',
-  customDate: '',
-  resolvedDate: null,
-  weather: false,
-  city: '',
-  customAccent: '',
-  blur: 14,
-  clock: false,
-  greeting: false,
-  greetingName: ''
-};
-
-function loadSettings() {
-  try {
-    return { ...defaults, ...JSON.parse(localStorage.getItem('obscure_settings')) };
-  } catch {
-    return { ...defaults };
-  }
-}
-
-function saveSettings(s) {
-  localStorage.setItem('obscure_settings', JSON.stringify(s));
-}
-
-let settings = loadSettings();
 
 const themes = ['void', 'paper', 'dusk', 'pine', 'slate', 'mist', 'ember'];
 const themeAccents = {
@@ -240,12 +368,6 @@ function applySettings() {
   buildSwatches();
 }
 
-function persist() {
-  saveSettings(settings);
-}
-
-// clock
-
 let clockInterval = null;
 
 function updateClock() {
@@ -266,8 +388,6 @@ function startClock() {
     clockInterval = setInterval(updateClock, 1000);
   }
 }
-
-// greeting
 
 function updateGreeting() {
   if (!settings.greeting) return;
@@ -385,8 +505,10 @@ els.greetingName.addEventListener('change', () => {
 });
 
 els.reset.addEventListener('click', () => {
-  settings = { ...defaults };
+  settings = { ...defaults, customEngines: [] };
   applySettings();
+  buildEngineList();
+  updateEngineTrigger();
   persist();
   loadApod();
   if (settings.weather) loadWeather();
@@ -394,12 +516,10 @@ els.reset.addEventListener('click', () => {
 
 applySettings();
 
-// NASA APOD
-
 let lastApod = null;
 
 function randomPastDate() {
-  const start = new Date(1995, 5, 16); // Damn this is old
+  const start = new Date(1995, 5, 16);
   const end = new Date();
   const d = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
   return d.toISOString().slice(0, 10);
@@ -408,14 +528,13 @@ function randomPastDate() {
 function apodDateParam() {
   if (settings.dateMode === 'custom' && settings.customDate) return settings.customDate;
   if (settings.dateMode === 'random') {
-
     if (!settings.resolvedDate) {
       settings.resolvedDate = randomPastDate();
       persist();
     }
     return settings.resolvedDate;
   }
-  return null; // today
+  return null;
 }
 
 function formatDesc(text) {
@@ -468,8 +587,6 @@ function loadApod() {
 }
 
 loadApod();
-
-//weather (OpenWeatherMap)
 
 function renderWeather(data) {
   document.getElementById('weather-temp').textContent = `${Math.round(data.main.temp)}°C`;

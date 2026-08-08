@@ -26,7 +26,17 @@
         <form id="search-form" autocomplete="off">
           <span class="prompt">›</span>
           <input type="text" id="query" placeholder="search obscure..." autofocus autocomplete="off">
-          <select id="engine"></select>
+          <div class="engine-picker" id="engine-picker">
+            <button type="button" id="engine-trigger" class="engine-trigger" aria-haspopup="listbox" aria-expanded="false"></button>
+            <div class="engine-menu" id="engine-menu" hidden>
+              <div class="engine-list" id="engine-list"></div>
+              <div class="engine-add">
+                <input type="text" id="new-engine-name" placeholder="name">
+                <input type="text" id="new-engine-url" placeholder="url ending in q=">
+                <button type="button" id="new-engine-add">add engine</button>
+              </div>
+            </div>
+          </div>
           <button type="submit">go</button>
         </form>
 
