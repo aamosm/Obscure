@@ -558,7 +558,49 @@ function renderApod() {
   document.getElementById('desc').textContent = formatDesc(lastApod.explanation);
 }
 
+function apodCacheKey() {
+  const date = apodDateParam();
+  return date || new Date().toISOString().slice(0, 10);
+}
+
+function readApodCache() {
+  try {
+    return JSON.parse(localStorage.getItem('obscure_apod_cache'));
+  } catch {
+    return null;
+  }
+}
+
+function writeApodCache(key, data) {
+  try {
+    localStorage.setItem('obscure_apod_cache', JSON.stringify({ key, data }));
+  } catch {
+    console.log('Could not cache apod response');
+  }
+}
+
+function applyApodBackground(data) {
+  if (data.media_type === 'image') {
+    const imgUrl = settings.hd && data.hdurl ? data.hdurl : data.url;
+    document.body.style.backgroundImage = `url('${imgUrl}')`;
+  } else if (data.media_type === 'video' && data.thumbnail_url) {
+    document.body.style.backgroundImage = `url('${data.thumbnail_url}')`;
+  } else {
+    document.body.style.backgroundImage = '';
+  }
+}
+
 function loadApod() {
+  const key = apodCacheKey();
+  const cached = readApodCache();
+
+  if (cached && cached.key === key && cached.data) {
+    lastApod = cached.data;
+    renderApod();
+    applyApodBackground(cached.data);
+    return;
+  }
+
   const apiKey = import.meta.env.VITE_NASA_API_KEY;
   const date = apodDateParam();
   let url = `https://api.nasa.gov/planetary/apod?api_key=${apiKey}`;
@@ -569,15 +611,8 @@ function loadApod() {
     .then((data) => {
       lastApod = data;
       renderApod();
-
-      if (data.media_type === 'image') {
-        const imgUrl = settings.hd && data.hdurl ? data.hdurl : data.url;
-        document.body.style.backgroundImage = `url('${imgUrl}')`;
-      } else if (data.media_type === 'video' && data.thumbnail_url) {
-        document.body.style.backgroundImage = `url('${data.thumbnail_url}')`;
-      } else {
-        document.body.style.backgroundImage = '';
-      }
+      applyApodBackground(data);
+      writeApodCache(key, data);
     })
     .catch((err) => {
       console.log('Fetch failed:', err);
