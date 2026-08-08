@@ -81,7 +81,9 @@ form.addEventListener('submit', (e) => {
 const defaults = {
   theme: 'void',
   font: 'Space Grotesk',
-  showText: true,
+  textLength: 'full',
+  textBox: true,
+  textBoxOpacity: 35,
   hd: false,
   dateMode: 'today',
   customDate: '',
@@ -126,7 +128,9 @@ const els = {
   close: document.getElementById('settings-close'),
   swatches: document.getElementById('theme-swatches'),
   font: document.getElementById('font-select'),
-  showText: document.getElementById('toggle-text'),
+  textLength: document.getElementById('text-length'),
+  textBox: document.getElementById('toggle-textbox'),
+  textBoxOpacity: document.getElementById('textbox-opacity'),
   hd: document.getElementById('toggle-hd'),
   dateMode: document.getElementById('date-mode'),
   customDate: document.getElementById('date-custom'),
@@ -172,15 +176,37 @@ function loadGoogleFont(family) {
   document.documentElement.style.setProperty('--font-body', `'${family}', sans-serif`);
 }
 
+function hexToRgb(hex) {
+  let h = hex.replace('#', '').trim();
+  if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+  const num = parseInt(h, 16);
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+}
+
+function applyTextBox() {
+  const box = document.getElementById('nasa-box');
+  if (!settings.textBox) {
+    box.classList.remove('boxed');
+    box.style.background = 'none';
+    return;
+  }
+  box.classList.add('boxed');
+  const bgVar = getComputedStyle(document.body).getPropertyValue('--bg').trim();
+  const [r, g, b] = hexToRgb(bgVar);
+  box.style.background = `rgba(${r}, ${g}, ${b}, ${settings.textBoxOpacity / 100})`;
+}
+
 function applySettings() {
   document.body.setAttribute('data-theme', settings.theme);
   loadGoogleFont(settings.font);
 
-  document.getElementById('nasa-box').style.display = settings.showText ? '' : 'none';
   document.getElementById('weather-box').hidden = !settings.weather;
 
   els.font.value = settings.font;
-  els.showText.checked = settings.showText;
+  els.textLength.value = settings.textLength;
+  els.textBox.checked = settings.textBox;
+  els.textBoxOpacity.hidden = !settings.textBox;
+  els.textBoxOpacity.value = settings.textBoxOpacity;
   els.hd.checked = settings.hd;
   els.dateMode.value = settings.dateMode;
   els.customDate.hidden = settings.dateMode !== 'custom';
@@ -196,22 +222,21 @@ function applySettings() {
   }
   els.accentCustom.value = settings.customAccent || themeAccents[settings.theme] || '#5eead4';
 
-  // panel blur
   document.documentElement.style.setProperty('--panel-blur', `${settings.blur}px`);
   els.blurRange.value = settings.blur;
 
-  // clock
   els.clock.checked = settings.clock;
   els.clockDisplay.hidden = !settings.clock;
   startClock();
 
-  // greeting
   els.greeting.checked = settings.greeting;
   els.greetingName.hidden = !settings.greeting;
   els.greetingName.value = settings.greetingName;
   els.greetingDisplay.hidden = !settings.greeting;
   updateGreeting();
 
+  applyTextBox();
+  renderApod();
   buildSwatches();
 }
 
@@ -272,9 +297,22 @@ els.font.addEventListener('change', () => {
   persist();
 });
 
-els.showText.addEventListener('change', () => {
-  settings.showText = els.showText.checked;
-  applySettings();
+els.textLength.addEventListener('change', () => {
+  settings.textLength = els.textLength.value;
+  renderApod();
+  persist();
+});
+
+els.textBox.addEventListener('change', () => {
+  settings.textBox = els.textBox.checked;
+  els.textBoxOpacity.hidden = !settings.textBox;
+  applyTextBox();
+  persist();
+});
+
+els.textBoxOpacity.addEventListener('input', () => {
+  settings.textBoxOpacity = Number(els.textBoxOpacity.value);
+  applyTextBox();
   persist();
 });
 
@@ -358,6 +396,8 @@ applySettings();
 
 // NASA APOD
 
+let lastApod = null;
+
 function randomPastDate() {
   const start = new Date(1995, 5, 16); // Damn this is old
   const end = new Date();
@@ -378,6 +418,27 @@ function apodDateParam() {
   return null; // today
 }
 
+function formatDesc(text) {
+  if (!text) return '';
+  if (settings.textLength !== 'short') return text;
+  if (text.length <= 160) return text;
+  return text.slice(0, 160).replace(/\s+\S*$/, '') + '…';
+}
+
+function renderApod() {
+  const box = document.getElementById('nasa-box');
+  if (!lastApod) return;
+
+  if (settings.textLength === 'off') {
+    box.style.display = 'none';
+    return;
+  }
+
+  box.style.display = '';
+  document.getElementById('title').textContent = lastApod.title;
+  document.getElementById('desc').textContent = formatDesc(lastApod.explanation);
+}
+
 function loadApod() {
   const apiKey = import.meta.env.VITE_NASA_API_KEY;
   const date = apodDateParam();
@@ -387,8 +448,8 @@ function loadApod() {
   fetch(url)
     .then((res) => res.json())
     .then((data) => {
-      document.getElementById('title').textContent = data.title;
-      document.getElementById('desc').textContent = data.explanation;
+      lastApod = data;
+      renderApod();
 
       if (data.media_type === 'image') {
         const imgUrl = settings.hd && data.hdurl ? data.hdurl : data.url;
@@ -401,8 +462,8 @@ function loadApod() {
     })
     .catch((err) => {
       console.log('Fetch failed:', err);
-      document.getElementById('title').textContent = "couldn't load image today.";
-      document.getElementById('desc').textContent = '';
+      lastApod = { title: "couldn't load image today.", explanation: '' };
+      renderApod();
     });
 }
 

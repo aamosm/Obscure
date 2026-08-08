@@ -81,10 +81,20 @@
         </section>
 
         <section>
+          <label class="section-label" for="text-length">title & description</label>
+          <select id="text-length">
+            <option value="full">full</option>
+            <option value="short">short</option>
+            <option value="off">hidden</option>
+          </select>
+        </section>
+
+        <section>
           <label class="section-label">
-            <input type="checkbox" id="toggle-text" checked>
-            show title & description
+            <input type="checkbox" id="toggle-textbox" checked>
+            background box behind text
           </label>
+          <input type="range" id="textbox-opacity" min="0" max="90" value="35">
         </section>
 
         <section>
