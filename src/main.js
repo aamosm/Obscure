@@ -324,6 +324,20 @@ function applyTextBox() {
   box.style.background = `rgba(${r}, ${g}, ${b}, ${settings.textBoxOpacity / 100})`;
 }
 
+function updateFavicon(color) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="35" stroke="${color}" stroke-width="20" fill="none" />
+  </svg>`;
+  const dataUrl = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  let link = document.querySelector("link[rel~='icon']");
+  if (!link) {
+    link = document.createElement('link');
+    link.rel = 'icon';
+    document.head.appendChild(link);
+  }
+  link.href = dataUrl;
+}
+
 function applySettings() {
   document.body.setAttribute('data-theme', settings.theme);
   loadGoogleFont(settings.font);
@@ -349,6 +363,9 @@ function applySettings() {
     document.body.style.removeProperty('--accent');
   }
   els.accentCustom.value = settings.customAccent || themeAccents[settings.theme] || '#5eead4';
+
+  const currentAccent = settings.customAccent || themeAccents[settings.theme] || '#5eead4';
+  updateFavicon(currentAccent);
 
   document.documentElement.style.setProperty('--panel-blur', `${settings.blur}px`);
   els.blurRange.value = settings.blur;

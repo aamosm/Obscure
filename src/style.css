@@ -179,7 +179,7 @@ body {
   width: min(220px, 70vw);
   max-height: 340px;
   flex-direction: column;
-  background: var(--panel-bg);
+  background: color-mix(in srgb, var(--bg) 95%, transparent);
   border: 1px solid var(--panel-border);
   border-radius: var(--radius);
   backdrop-filter: blur(var(--panel-blur)) saturate(160%);

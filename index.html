@@ -2,10 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Obscure</title>
-    <meta name="description" content="A customizable new tab page built around search and the sky.">
-
+    <meta name="description" content="A customizable new tab page built around search.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='35' stroke='%23ffcc00' stroke-width='20' fill='none'/%3E%3C/svg%3E">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -20,24 +20,40 @@
   <body data-theme="void">
     <div id="app">
 
-      <button id="settings-toggle" aria-label="Open settings" aria-expanded="false">⚙</button>
+      <button id="settings-toggle" class="surface-float" aria-label="Open settings" aria-expanded="false">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <line x1="4" y1="5" x2="16" y2="5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <circle cx="12" cy="5" r="1.7" fill="var(--bg)" stroke="currentColor" stroke-width="1.4"/>
+          <line x1="4" y1="10" x2="16" y2="10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <circle cx="7" cy="10" r="1.7" fill="var(--bg)" stroke="currentColor" stroke-width="1.4"/>
+          <line x1="4" y1="15" x2="16" y2="15" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <circle cx="14" cy="15" r="1.7" fill="var(--bg)" stroke="currentColor" stroke-width="1.4"/>
+        </svg>
+      </button>
 
       <main id="stage">
         <form id="search-form" autocomplete="off">
           <span class="prompt">›</span>
           <input type="text" id="query" placeholder="search obscure..." autofocus autocomplete="off">
-          <div class="engine-picker" id="engine-picker">
-            <button type="button" id="engine-trigger" class="engine-trigger" aria-haspopup="listbox" aria-expanded="false"></button>
-            <div class="engine-menu" id="engine-menu" hidden>
-              <div class="engine-list" id="engine-list"></div>
-              <div class="engine-add">
-                <div class="engine-add-label">add engine</div>
+
+          <div class="dropdown dropdown--inline" id="engine-picker">
+            <button type="button" id="engine-trigger" class="dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+              <span class="dd-label"></span>
+              <svg class="chevron" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="dropdown-menu surface-float" id="engine-menu" hidden>
+              <div class="dropdown-list" id="engine-list"></div>
+              <div class="dropdown-add">
+                <div class="dropdown-add-label">add engine</div>
                 <input type="text" id="new-engine-name" placeholder="name">
                 <input type="text" id="new-engine-url" placeholder="url ending in q=">
                 <button type="button" id="new-engine-add">add</button>
               </div>
             </div>
           </div>
+
           <button type="submit">go</button>
         </form>
 
@@ -57,10 +73,14 @@
         </div>
       </main>
 
-      <aside id="settings-panel" aria-hidden="true">
+      <aside id="settings-panel" class="surface-float" aria-hidden="true">
         <div class="panel-head">
           <span>settings</span>
-          <button id="settings-close" aria-label="Close settings">×</button>
+          <button id="settings-close" aria-label="Close settings">
+            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+          </button>
         </div>
 
         <section>
@@ -79,25 +99,33 @@
         </section>
 
         <section>
-          <label class="section-label" for="font-select">font</label>
-          <select id="font-select">
-            <option value="Space Grotesk">Space Grotesk</option>
-            <option value="Inter">Inter</option>
-            <option value="IBM Plex Sans">IBM Plex Sans</option>
-            <option value="Work Sans">Work Sans</option>
-            <option value="Fraunces">Fraunces</option>
-            <option value="Playfair Display">Playfair Display</option>
-            <option value="JetBrains Mono">JetBrains Mono</option>
-          </select>
+          <label class="section-label" id="font-label">font</label>
+          <div class="dropdown dropdown--block" id="font-select">
+            <button type="button" class="dropdown-trigger" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="font-label">
+              <span class="dd-label"></span>
+              <svg class="chevron" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="dropdown-menu surface-float" hidden>
+              <div class="dropdown-list"></div>
+            </div>
+          </div>
         </section>
 
         <section>
-          <label class="section-label" for="text-length">title & description</label>
-          <select id="text-length">
-            <option value="full">full</option>
-            <option value="short">short</option>
-            <option value="off">hidden</option>
-          </select>
+          <label class="section-label" id="text-length-label">title & description</label>
+          <div class="dropdown dropdown--block" id="text-length">
+            <button type="button" class="dropdown-trigger" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="text-length-label">
+              <span class="dd-label"></span>
+              <svg class="chevron" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="dropdown-menu surface-float" hidden>
+              <div class="dropdown-list"></div>
+            </div>
+          </div>
         </section>
 
         <section>
@@ -116,12 +144,18 @@
         </section>
 
         <section>
-          <label class="section-label" for="date-mode">background date</label>
-          <select id="date-mode">
-            <option value="today">today</option>
-            <option value="random">random past date</option>
-            <option value="custom">custom date</option>
-          </select>
+          <label class="section-label" id="date-mode-label">background date</label>
+          <div class="dropdown dropdown--block" id="date-mode">
+            <button type="button" class="dropdown-trigger" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="date-mode-label">
+              <span class="dd-label"></span>
+              <svg class="chevron" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="dropdown-menu surface-float" hidden>
+              <div class="dropdown-list"></div>
+            </div>
+          </div>
           <input type="date" id="date-custom" hidden>
         </section>
 
