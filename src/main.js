@@ -239,6 +239,113 @@ form.addEventListener('submit', (e) => {
   }
 });
 
+function createDropdown(prefix, options, get, set, onChange) {
+  const root = document.getElementById(`${prefix}-dropdown`);
+  const trigger = document.getElementById(`${prefix}-trigger`);
+  const menu = document.getElementById(`${prefix}-menu`);
+  const list = document.getElementById(`${prefix}-list`);
+
+  function render() {
+    list.innerHTML = '';
+    for (const opt of options) {
+      const row = document.createElement('div');
+      row.className = 'dropdown-option' + (opt.value === get() ? ' active' : '');
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'dropdown-option-name';
+      btn.textContent = opt.label;
+      btn.addEventListener('click', () => {
+        set(opt.value);
+        onChange();
+        updateTrigger();
+        render();
+        close();
+      });
+      row.appendChild(btn);
+      list.appendChild(row);
+    }
+  }
+
+  function updateTrigger() {
+    const found = options.find((o) => o.value === get());
+    trigger.textContent = found ? found.label : '';
+  }
+
+  function open() {
+    menu.hidden = false;
+    trigger.setAttribute('aria-expanded', 'true');
+  }
+
+  function close() {
+    menu.hidden = true;
+    trigger.setAttribute('aria-expanded', 'false');
+  }
+
+  trigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (menu.hidden) open(); else close();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!root.contains(e.target)) close();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') close();
+  });
+
+  render();
+  updateTrigger();
+
+  return { render, updateTrigger };
+}
+
+const fontDropdown = createDropdown(
+  'font',
+  [
+    { value: 'Space Grotesk', label: 'Space Grotesk' },
+    { value: 'Inter', label: 'Inter' },
+    { value: 'IBM Plex Sans', label: 'IBM Plex Sans' },
+    { value: 'Work Sans', label: 'Work Sans' },
+    { value: 'Fraunces', label: 'Fraunces' },
+    { value: 'Playfair Display', label: 'Playfair Display' },
+    { value: 'JetBrains Mono', label: 'JetBrains Mono' }
+  ],
+  () => settings.font,
+  (v) => { settings.font = v; },
+  () => { applySettings(); persist(); }
+);
+
+const dateModeDropdown = createDropdown(
+  'date-mode',
+  [
+    { value: 'today', label: 'today' },
+    { value: 'random', label: 'random past date' },
+    { value: 'custom', label: 'custom date' }
+  ],
+  () => settings.dateMode,
+  (v) => { settings.dateMode = v; },
+  () => {
+    if (settings.dateMode === 'random') settings.resolvedDate = randomPastDate();
+    applySettings();
+    persist();
+    loadApod();
+  }
+);
+
+const textLengthDropdown = createDropdown(
+  'text-length',
+  [
+    { value: 'full', label: 'full' },
+    { value: 'short', label: 'short' },
+    { value: 'off', label: 'hidden' }
+  ],
+  () => settings.textLength,
+  (v) => { settings.textLength = v; },
+  () => { renderApod(); persist(); }
+);
+
 const themes = ['void', 'paper', 'dusk', 'pine', 'slate', 'mist', 'ember'];
 const themeAccents = {
   void: '#5eead4',
@@ -255,12 +362,9 @@ const els = {
   panel: document.getElementById('settings-panel'),
   close: document.getElementById('settings-close'),
   swatches: document.getElementById('theme-swatches'),
-  font: document.getElementById('font-select'),
-  textLength: document.getElementById('text-length'),
   textBox: document.getElementById('toggle-textbox'),
   textBoxOpacity: document.getElementById('textbox-opacity'),
   hd: document.getElementById('toggle-hd'),
-  dateMode: document.getElementById('date-mode'),
   customDate: document.getElementById('date-custom'),
   weather: document.getElementById('toggle-weather'),
   city: document.getElementById('weather-city-input'),
@@ -344,13 +448,16 @@ function applySettings() {
 
   document.getElementById('weather-box').hidden = !settings.weather;
 
-  els.font.value = settings.font;
-  els.textLength.value = settings.textLength;
+  fontDropdown.updateTrigger();
+  fontDropdown.render();
+  textLengthDropdown.updateTrigger();
+  textLengthDropdown.render();
   els.textBox.checked = settings.textBox;
   els.textBoxOpacity.hidden = !settings.textBox;
   els.textBoxOpacity.value = settings.textBoxOpacity;
   els.hd.checked = settings.hd;
-  els.dateMode.value = settings.dateMode;
+  dateModeDropdown.updateTrigger();
+  dateModeDropdown.render();
   els.customDate.hidden = settings.dateMode !== 'custom';
   els.customDate.value = settings.customDate;
   els.weather.checked = settings.weather;
@@ -428,18 +535,6 @@ els.close.addEventListener('click', () => {
   els.panel.setAttribute('aria-hidden', 'true');
 });
 
-els.font.addEventListener('change', () => {
-  settings.font = els.font.value;
-  applySettings();
-  persist();
-});
-
-els.textLength.addEventListener('change', () => {
-  settings.textLength = els.textLength.value;
-  renderApod();
-  persist();
-});
-
 els.textBox.addEventListener('change', () => {
   settings.textBox = els.textBox.checked;
   els.textBoxOpacity.hidden = !settings.textBox;
@@ -455,16 +550,6 @@ els.textBoxOpacity.addEventListener('input', () => {
 
 els.hd.addEventListener('change', () => {
   settings.hd = els.hd.checked;
-  persist();
-  loadApod();
-});
-
-els.dateMode.addEventListener('change', () => {
-  settings.dateMode = els.dateMode.value;
-  if (settings.dateMode === 'random') {
-    settings.resolvedDate = randomPastDate();
-  }
-  applySettings();
   persist();
   loadApod();
 });
